@@ -50,6 +50,8 @@ All nodes work **without any external dependencies** and can be used separately 
 
 ## 📝 Basic Workflow
 
+![image generator workflow](https://raw.githubusercontent.com/saeedkhalili/ComfyUI-Saeed-Nodes/refs/heads/main/ComfyUI-Saeed-Nodes%20image%20generator%20workflow.jpg)
+
 1. Create a latent with **Cinematic Aspect Ratio Selector**.
 2. Load models with **Model Loader**.
 3. Build camera & lighting prompts using **Camera Selector** and **Light Selector**.
