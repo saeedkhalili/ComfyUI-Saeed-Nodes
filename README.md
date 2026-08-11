@@ -2,6 +2,8 @@
 
 A collection of professional, self‑contained nodes for **ComfyUI**, designed for filmmakers, AI artists, and anyone who wants full cinematic control over their generated images.
 
+![image generator workflow](https://raw.githubusercontent.com/saeedkhalili/ComfyUI-Saeed-Nodes/refs/heads/main/Cinematic%20Camera%20Node%20Pack.jpg)
+
 ---
 
 ## ✨ Features
