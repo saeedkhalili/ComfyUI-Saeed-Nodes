@@ -4,6 +4,7 @@ from .cinematic_camera_selector import CameraSelector
 from .cinematic_light_selector import LightSelector
 from .image_generator import ImageGenerator
 from .landscape_prompt_generator import LandscapePromptGenerator
+from .negative_prompt_generator import NegativePromptGenerator
 
 NODE_CLASS_MAPPINGS = {
     "CinematicAspectRatioSelector": CinematicAspectRatioSelector,
@@ -11,7 +12,8 @@ NODE_CLASS_MAPPINGS = {
     "CameraSelector": CameraSelector,
     "LightSelector": LightSelector,
     "ImageGenerator": ImageGenerator,
-    "LandscapePromptGenerator": LandscapePromptGenerator
+    "LandscapePromptGenerator": LandscapePromptGenerator,
+    "NegativePromptGenerator": NegativePromptGenerator
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -20,5 +22,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "CameraSelector": "Camera Selector",
     "LightSelector": "Light Selector",
     "ImageGenerator": "Image Generator",
-    "LandscapePromptGenerator": "Landscape Prompt Generator"
+    "LandscapePromptGenerator": "Landscape Prompt Generator",
+    "NegativePromptGenerator": "Negative Prompt Generator"
 }
