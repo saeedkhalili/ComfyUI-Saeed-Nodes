@@ -2,27 +2,25 @@ import os
 import folder_paths
 import comfy.sd
 import comfy.utils
-from nodes import LoraLoader
+from nodes import LoraLoader, CLIPLoader
 
-# CLIP type list from ComfyUI enum
 try:
-    _clip_type_enum = comfy.sd.CLIPType
-    CLIP_TYPES = [e.name.lower() for e in _clip_type_enum]
-    if "stable_diffusion" not in CLIP_TYPES:
-        CLIP_TYPES.insert(0, "stable_diffusion")
+    # دریافت لیست نوع‌های CLIP دقیقاً از نود استاندارد Load CLIP
+    _clip_types_info = CLIPLoader.INPUT_TYPES()["required"]["type"]
+    if isinstance(_clip_types_info, tuple):
+        CLIP_TYPES = _clip_types_info[0]
+    else:
+        CLIP_TYPES = _clip_types_info
 except Exception:
-    CLIP_TYPES = ["stable_diffusion", "stable_cascade", "sd3", "stable_audio",
-                  "mochi", "ltxv", "pixart", "cosmos", "lumina2", "wan",
-                  "hidream", "chroma", "ace", "omnigen2", "qwen_image",
-                  "hunyuan_image", "flux2", "ovis", "longcat_image",
-                  "cogvideox", "lens", "pixeldit", "ideogram4"]
+    CLIP_TYPES = ["stable_diffusion", "qwen_image", "krea2"]  # fallback
 
 
 class ModelLoaderWithLora:
     """
-    Loads Diffusion Model, CLIP (with type), VAE, and up to 5 LoRAs with strength and trigger words.
-    Outputs: MODEL, CLIP, VAE, trigger_words (comma-separated).
+    لودر مدل جامع: Diffusion Model، CLIP (با لیست نوع استاندارد)، VAE
+    و ۵ اسلات لورا با قدرت و کلمهٔ تریگر.
     """
+
     @classmethod
     def INPUT_TYPES(cls):
         diffusion_models = folder_paths.get_filename_list("diffusion_models")
@@ -39,7 +37,7 @@ class ModelLoaderWithLora:
             }
         }
 
-        # LoRA slots 1-5
+        # اسلات‌های لورا
         inputs["required"].update({
             "lora_1_model": (lora_models, {"default": "Qwen\\Qwen-Image-2512-Lightning-8steps-V1.0-fp32.safetensors"}),
             "lora_1_strength": ("FLOAT", {"default": 1.0, "min": -10.0, "max": 10.0, "step": 0.01}),
@@ -65,26 +63,23 @@ class ModelLoaderWithLora:
     CATEGORY = "Saeed"
 
     def load_models(self, diffusion_model, clip_model, clip_type, vae_model, **lora_kwargs):
-        # 1. Load Diffusion Model
+        # ۱. بارگذاری Diffusion Model
         if not diffusion_model:
             raise ValueError("Diffusion model not selected.")
         unet_path = folder_paths.get_full_path("diffusion_models", diffusion_model)
         model = comfy.sd.load_diffusion_model(unet_path)
 
-        # 2. Load CLIP
-        clip_path = folder_paths.get_full_path("text_encoders", clip_model)
-        clip = comfy.sd.load_clip(
-            ckpt_paths=[clip_path],
-            embedding_directory=folder_paths.get_folder_paths("embeddings"),
-            clip_type=clip_type
-        )
+        # ۲. بارگذاری CLIP با استفاده از نود استاندارد CLIPLoader
+        # این روش تضمین می‌کند که تمام clip_type ها (مثل krea2) بدون ایراد کار کنند.
+        clip_loader = CLIPLoader()
+        clip = clip_loader.load_clip(clip_model, clip_type)[0]
 
-        # 3. Load VAE
+        # ۳. بارگذاری VAE
         vae_path = folder_paths.get_full_path("vae", vae_model)
         vae_sd = comfy.utils.load_torch_file(vae_path)
         vae = comfy.sd.VAE(sd=vae_sd)
 
-        # 4. Apply LoRAs using standard LoraLoader
+        # ۴. اعمال LoRAها
         trigger_words = []
         lora_loader = LoraLoader()
         for i in range(1, 6):
@@ -94,11 +89,12 @@ class ModelLoaderWithLora:
             strength = lora_kwargs.get(f"lora_{i}_strength", 1.0)
             trigger_word = lora_kwargs.get(f"lora_{i}_trigger_word", "").strip()
 
+            lora_path = folder_paths.get_full_path("loras", lora_name)
             model, clip = lora_loader.load_lora(model, clip, lora_name, strength, strength)
 
             if trigger_word:
                 trigger_words.append(trigger_word)
 
-        # 5. Build trigger words string
+        # ۵. ترکیب کلمات تریگر
         final_trigger = ", ".join(trigger_words)
         return (model, clip, vae, final_trigger)
