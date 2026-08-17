@@ -5,6 +5,8 @@ from .cinematic_light_selector import LightSelector
 from .image_generator import ImageGenerator
 from .landscape_prompt_generator import LandscapePromptGenerator
 from .negative_prompt_generator import NegativePromptGenerator
+from .image_renamer import ImageRenamer
+from .image_date_organizer import ImageDateOrganizer
 
 NODE_CLASS_MAPPINGS = {
     "CinematicAspectRatioSelector": CinematicAspectRatioSelector,
@@ -13,7 +15,9 @@ NODE_CLASS_MAPPINGS = {
     "LightSelector": LightSelector,
     "ImageGenerator": ImageGenerator,
     "LandscapePromptGenerator": LandscapePromptGenerator,
-    "NegativePromptGenerator": NegativePromptGenerator
+    "NegativePromptGenerator": NegativePromptGenerator,
+    "ImageRenamer": ImageRenamer,
+    "ImageDateOrganizer": ImageDateOrganizer
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -23,5 +27,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "LightSelector": "Light Selector",
     "ImageGenerator": "Image Generator",
     "LandscapePromptGenerator": "Landscape Prompt Generator",
-    "NegativePromptGenerator": "Negative Prompt Generator"
+    "NegativePromptGenerator": "Negative Prompt Generator",
+    "ImageRenamer": "Image Renamer",
+    "ImageDateOrganizer": "Image Date Organizer"
 }
