@@ -4,6 +4,13 @@
 class CharacterGenerator:
     """نود تولید مشخصات کاراکتر"""
 
+    PRESENCE = [
+        ("🚫 No character", ""),
+        ("👤 Single character", "single character"),
+        ("👥 Small group", "small group of people"),
+        ("👨‍👩‍👧‍👦 Crowd", "large crowd of people"),
+    ]
+
     GENDERS = [
         ("👨 Male", "male"),
         ("👩 Female", "female"),
@@ -58,6 +65,7 @@ class CharacterGenerator:
     def INPUT_TYPES(cls):
         return {
             "required": {
+                "presence": ([d for d, _ in cls.PRESENCE],),
                 "gender": ([d for d, _ in cls.GENDERS],),
                 "age": ([d for d, _ in cls.AGES],),
                 "clothing": ([d for d, _ in cls.CLOTHING],),
@@ -71,15 +79,27 @@ class CharacterGenerator:
     FUNCTION = "generate_prompt"
     CATEGORY = "Saeed"
 
-    def generate_prompt(self, gender, age, clothing, clothing_color_texture, decade):
+    def generate_prompt(self, presence, gender, age, clothing, clothing_color_texture, decade):
         def get_desc(display, source_list):
             for d, desc in source_list:
                 if d == display:
                     return desc
             return ""
 
+        # اگر No character انتخاب شده باشد، خروجی خالی برمی‌گردانیم
+        if presence == "🚫 No character":
+            return ("",)
+
+        presence_desc = get_desc(presence, self.PRESENCE)
+
+        # برای جمعیت نیازی به جنسیت/سن/لباس تکی نیست، اما می‌توانیم کلی‌تر بنویسیم
+        if presence_desc.startswith("large crowd"):
+            prompt = f"Characters: {presence_desc}"
+            return (prompt,)
+
         prompt = (
-            f"Character: {get_desc(gender, self.GENDERS)}, "
+            f"Character: {presence_desc}, "
+            f"{get_desc(gender, self.GENDERS)}, "
             f"{get_desc(age, self.AGES)}, "
             f"wearing {get_desc(clothing, self.CLOTHING)}"
         )
