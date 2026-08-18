@@ -83,6 +83,7 @@ class ImageGenerator:
         # 5. دیکد تصویر
         decoder = VAEDecode()
         image = decoder.decode(vae, latent_out)[0]
+        image.seed = seed   # افزودن seed به تصویر
 
         # 6. ساخت نام فایل
         safe_ratio = ratio_name.replace(" ", "_")
