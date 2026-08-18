@@ -1,8 +1,7 @@
 # image_generator.py
-# یک نود که مدل را گرفته، پرامپت‌ها را ترکیب می‌کند،
-# در صورت وجود AuraFlow را اعمال می‌کند، نمونه‌برداری و دیکد را انجام می‌دهد
-# و تصویر به‌همراه نام فایل خروجی می‌دهد.
+# نود جنریتور تصویر – اتصال پرامپت‌ها و اجرای نمونه‌برداری
 
+import torch
 import comfy.sd
 from nodes import CLIPTextEncode, KSampler, VAEDecode
 
@@ -13,7 +12,7 @@ except ImportError:
 
 
 class ImageGenerator:
-    """نود جنریتور سینمایی – پرامپت‌ها را ترکیب کرده، نمونه‌برداری و دیکد می‌کند."""
+    """جنریتور تصویر – مدل، کلیپ، وی‌ای‌ای، لاتنت و پرامپت‌ها را می‌گیرد"""
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -23,13 +22,8 @@ class ImageGenerator:
                 "clip": ("CLIP",),
                 "vae": ("VAE",),
                 "latent": ("LATENT",),
-                "project_name": ("STRING", {"default": "ProGen"}),     # ← بعد از latent
-                "ratio_name": ("STRING", {"default": ""}),              # ← جایگزین ratio_string
                 "positive_prompt": ("STRING", {"multiline": True, "default": ""}),
                 "negative_prompt": ("STRING", {"multiline": True, "default": ""}),
-                "camera_prompt": ("STRING", {"default": ""}),
-                "light_prompt": ("STRING", {"default": ""}),
-                "trigger_words": ("STRING", {"default": ""}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "steps": ("INT", {"default": 8, "min": 1, "max": 100}),
                 "cfg": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 20.0, "step": 0.1}),
@@ -37,18 +31,31 @@ class ImageGenerator:
                 "scheduler": (["normal", "simple", "beta", "karras"], {"default": "beta"}),
                 "denoise": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "aura_flow_shift": ("FLOAT", {"default": 3.0, "min": 0.0, "max": 10.0, "step": 0.01}),
+            },
+            "optional": {
+                "camera_prompt": ("STRING", {"forceInput": True, "default": ""}),
+                "camera_movement_prompt": ("STRING", {"forceInput": True, "default": ""}),
+                "light_prompt": ("STRING", {"forceInput": True, "default": ""}),
+                "landscape_prompt": ("STRING", {"forceInput": True, "default": ""}),
+                "character_prompt": ("STRING", {"forceInput": True, "default": ""}),
+                "action_prompt": ("STRING", {"forceInput": True, "default": ""}),
+                "scene_element_prompt": ("STRING", {"forceInput": True, "default": ""}),
+                "style_prompt": ("STRING", {"forceInput": True, "default": ""}),
+                "framing_prompt": ("STRING", {"forceInput": True, "default": ""}),
+                "trigger_words": ("STRING", {"forceInput": True, "default": ""}),
             }
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("image", "file_name")
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
     FUNCTION = "generate"
     CATEGORY = "Saeed"
 
-    def generate(self, model, clip, vae, latent, project_name, ratio_name,
-                 positive_prompt, negative_prompt, camera_prompt, light_prompt,
-                 trigger_words, seed, steps, cfg, sampler_name, scheduler,
-                 denoise, aura_flow_shift):
+    def generate(self, model, clip, vae, latent, positive_prompt, negative_prompt,
+                 seed, steps, cfg, sampler_name, scheduler, denoise, aura_flow_shift,
+                 camera_prompt="", camera_movement_prompt="", light_prompt="",
+                 landscape_prompt="", character_prompt="", action_prompt="",
+                 scene_element_prompt="", style_prompt="", framing_prompt="", trigger_words=""):
 
         # 1. AuraFlow (در صورت وجود)
         if AuraFlowModelSampling is not None:
@@ -60,17 +67,36 @@ class ImageGenerator:
             print("Warning: AuraFlow sampling not available – skipping.")
 
         # 2. ساخت پرامپت کامل
-        full_prompt = positive_prompt
-        if camera_prompt.strip():
-            full_prompt += f" | {camera_prompt.strip()}"
-        if light_prompt.strip():
-            full_prompt += f" | {light_prompt.strip()}"
+        final_prompt = positive_prompt.strip()
+
+        prompt_parts = [
+            ("camera", camera_prompt.strip()),
+            ("camera movement", camera_movement_prompt.strip()),
+            ("light", light_prompt.strip()),
+            ("landscape", landscape_prompt.strip()),
+            ("character", character_prompt.strip()),
+            ("action", action_prompt.strip()),
+            ("scene element", scene_element_prompt.strip()),
+            ("style", style_prompt.strip()),
+            ("framing", framing_prompt.strip()),
+        ]
+
+        added_prompts = []
+        for label, p in prompt_parts:
+            if p:
+                added_prompts.append(p)
+
         if trigger_words.strip():
-            full_prompt += f" {trigger_words.strip()}"
+            added_prompts.append(trigger_words.strip())
+
+        if final_prompt and added_prompts:
+            final_prompt = final_prompt + " | " + " | ".join(added_prompts)
+        elif not final_prompt and added_prompts:
+            final_prompt = " | ".join(added_prompts)
 
         # 3. انکد کردن پرامپت‌ها
         encode_pos = CLIPTextEncode()
-        pos_cond = encode_pos.encode(clip, full_prompt)[0]
+        pos_cond = encode_pos.encode(clip, final_prompt)[0]
         encode_neg = CLIPTextEncode()
         neg_cond = encode_neg.encode(clip, negative_prompt)[0]
 
@@ -83,13 +109,6 @@ class ImageGenerator:
         # 5. دیکد تصویر
         decoder = VAEDecode()
         image = decoder.decode(vae, latent_out)[0]
-        image.seed = seed   # افزودن seed به تصویر
+        image.seed = seed   # افزودن seed به تصویر برای استفاده در نود ذخیره‌ساز
 
-        # 6. ساخت نام فایل
-        safe_ratio = ratio_name.replace(" ", "_")
-        if safe_ratio:
-            file_name = f"{project_name}/{safe_ratio}_SEED{seed}"
-        else:
-            file_name = f"{project_name}/SEED{seed}"
-
-        return (image, file_name)
+        return (image,)

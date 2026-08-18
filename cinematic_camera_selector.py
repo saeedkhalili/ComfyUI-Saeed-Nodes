@@ -1,10 +1,11 @@
+# cinematic_camera_selector.py
+# انتخاب دوربین برای تصویر – بدون حرکت
+
 class CameraSelector:
     """
-    A node that generates a cinematic camera prompt.
-    Selection lists include emojis for visual guidance (not in prompt output).
-    Lens is a combo box with exact focal lengths.
+    نود انتخاب دوربین برای تصویرسازی
+    شامل زاویه، اندازه شات، موقعیت و لنز
     """
-
     ANGLES = [
         ("🎥 Straight-on angle", "camera directly facing the subject"),
         ("👁️ Eye-level", "camera at the subject's eye level"),
@@ -21,7 +22,6 @@ class CameraSelector:
         ("👀 Point of View (POV)", "as if seen through the character's eyes"),
         ("🚁 Overhead shot", "high aerial view, looking down from a distance"),
     ]
-
     SHOTS = [
         ("🌌 Extreme Wide Shot (EWS)", "subject very small in frame, vast environment visible"),
         ("🏞️ Wide Shot (WS)", "full subject and surroundings"),
@@ -32,7 +32,6 @@ class CameraSelector:
         ("😃 Close-Up (CU)", "face or detail fills the frame"),
         ("🔍 Extreme Close-Up (ECU)", "only a specific part, e.g. eyes or lips"),
     ]
-
     POSITIONS = [
         ("⬆️ Front view", "subject facing the camera"),
         ("⬅️ Left side view", "showing the subject's left side"),
@@ -43,8 +42,6 @@ class CameraSelector:
         ("↗️ Three-quarter front view", "45-degree angle from the front"),
         ("↙️ Three-quarter rear view", "45-degree angle from the rear"),
     ]
-
-    # Lens options (combo box for exact values)
     LENSES = [
         ("10mm", "10mm ultra‑wide lens"),
         ("14mm", "14mm ultra‑wide lens"),
@@ -60,32 +57,6 @@ class CameraSelector:
         ("200mm", "200mm telephoto lens"),
     ]
 
-    MOVEMENT_TYPES = [
-        ("-", ""),
-        ("➡️ Dolly In (push-in)", "Dolly In: camera moves closer to subject"),
-        ("⬅️ Dolly Out (push-out)", "Dolly Out: camera moves away from subject"),
-        ("🔄 Orbit Left (circles around)", "Orbit Left: camera circles around subject counter‑clockwise"),
-        ("🔄 Orbit Right (circles around)", "Orbit Right: camera circles around subject clockwise"),
-        ("⬆️ Pitch (overhead view)", "Pitch: camera tilts to an overhead view"),
-        ("🤚 Handheld (handheld movement)", "Handheld: realistic shaky human‑held motion"),
-        ("🚶 Tracking Shot (camera follows, tracks)", "Tracking Shot: camera follows the subject laterally"),
-        ("⬆️ Crane Up (camera goes up)", "Crane Up: camera elevates"),
-        ("⬇️ Crane Down (camera goes down)", "Crane Down: camera descends"),
-        ("🚁 Drone View (overhead view, god's-eye)", "Drone View: aerial overhead perspective"),
-        ("👥 Over-the-shoulder", "Over-the-shoulder: from behind a foreground character"),
-    ]
-
-    CAMERA_TURNS = ["-", "🌌 Expansive / Epic", "🔒 Intimate / Claustrophobic", "😐 Medium"]
-    CAMERA_SHAKES = ["-", "🌊 smooth", "〰️ wiggly", "📳 shaky", "👾 glitchy", "💥 crash"]
-    SPEEDS = [
-        "-",
-        "⏸️ freeze time (Freeze-frame — dramatic pause)",
-        "🐌 Slow motion — dramatic emphasis (elements move slowly)",
-        "🔄 Continuous shot — realism, unbroken take",
-        "⚡ Fast motion (elements move fast)",
-        "⏳ Time-lapse — passage of time",
-    ]
-
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -94,10 +65,6 @@ class CameraSelector:
                 "shot_size": ([d for d, _ in cls.SHOTS],),
                 "position": ([d for d, _ in cls.POSITIONS],),
                 "lens": ([d for d, _ in cls.LENSES], {"default": "50mm"}),
-                "movement": ([d for d, _ in cls.MOVEMENT_TYPES], {"default": "-"}),
-                "camera_turn": (cls.CAMERA_TURNS, {"default": "-"}),
-                "camera_shake": (cls.CAMERA_SHAKES, {"default": "-"}),
-                "speed": (cls.SPEEDS, {"default": "-"}),
             }
         }
 
@@ -106,34 +73,17 @@ class CameraSelector:
     FUNCTION = "generate_prompt"
     CATEGORY = "Saeed"
 
-    def generate_prompt(self, camera_angle, shot_size, position, lens,
-                        movement, camera_turn, camera_shake, speed):
+    def generate_prompt(self, camera_angle, shot_size, position, lens):
         def get_desc(display, source_list):
             for d, desc in source_list:
                 if d == display:
                     return desc
             return ""
 
-        # Static part
-        angle_desc = get_desc(camera_angle, self.ANGLES)
-        shot_desc = get_desc(shot_size, self.SHOTS)
-        pos_desc = get_desc(position, self.POSITIONS)
-        lens_desc = get_desc(lens, self.LENSES)   # already a description string
-
-        prompt = (f"Camera angle: {angle_desc}, "
-                  f"Shot: {shot_desc}, "
-                  f"Position: {pos_desc}, "
-                  f"Lens: {lens_desc}")
-
-        # Dynamic part
-        if movement != "-":
-            move_desc = get_desc(movement, self.MOVEMENT_TYPES)
-            prompt += f", Movement: {move_desc}"
-            if camera_turn != "-":
-                prompt += f", Turn: {camera_turn}"
-            if camera_shake != "-":
-                prompt += f", Shake: {camera_shake}"
-            if speed != "-":
-                prompt += f", Speed: {speed}"
-
+        prompt = (
+            f"Camera angle: {get_desc(camera_angle, self.ANGLES)}, "
+            f"Shot: {get_desc(shot_size, self.SHOTS)}, "
+            f"Position: {get_desc(position, self.POSITIONS)}, "
+            f"Lens: {get_desc(lens, self.LENSES)}"
+        )
         return (prompt,)

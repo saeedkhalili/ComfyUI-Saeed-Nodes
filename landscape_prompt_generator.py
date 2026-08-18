@@ -1,8 +1,8 @@
 # landscape_prompt_generator.py
-# یک نود برای تولید پرامپت منظره پس‌زمینه
+# تولید پرامپت منظره – بدون سبک
 
 class LandscapePromptGenerator:
-    """نود تولید پرامپت منظره پس‌زمینه – انتخابی، سریع و سینمایی"""
+    """نود تولید پرامپت منظره پس‌زمینه"""
 
     LANDSCAPES = [
         ("🏜️ Desert", "vast desert with golden sand dunes"),
@@ -16,41 +16,14 @@ class LandscapePromptGenerator:
         ("🌋 Volcano", "active volcano with lava flows"),
         ("🪐 Space", "deep space with stars and nebulae"),
         ("👽 Alien Planet", "alien planet surface with strange rock formations"),
-        ("🏙️ Urban City", "modern city skyline with tall buildings"),
+        ("🏙️ City", "modern city skyline with tall buildings"),
+        ("🏘️ Village", "picturesque village with rustic houses and narrow streets"),
         ("🏚️ Dystopian Ruins", "dystopian ruined city with decaying structures"),
         ("🧙 Fantasy Realm", "fantasy realm with magical elements"),
         ("🏖️ Coastal Beach", "sandy beach with ocean waves"),
         ("🕳️ Cave", "dark cave interior with stalactites"),
         ("🐊 Swamp", "murky swamp with twisted trees and water"),
         ("🌸 Meadow", "colorful flower meadow under open sky"),
-    ]
-
-    WEATHERS = [
-        ("-", ""),
-        ("☀️ Clear", "clear sky"),
-        ("☁️ Cloudy", "partly cloudy sky"),
-        ("🌧️ Rain", "rain falling"),
-        ("❄️ Snow", "snow falling"),
-        ("⛈️ Storm", "thunderstorm with lightning"),
-        ("🌫️ Fog", "dense fog"),
-        ("🌪️ Sandstorm", "sandstorm with blowing sand"),
-        ("🌋 Ashfall", "volcanic ash falling"),
-        ("☄️ Meteor Shower", "meteor shower in the sky"),
-        ("🌌 Aurora", "aurora borealis in the sky"),
-    ]
-
-    LIGHTINGS = [
-        ("-", ""),
-        ("🌇 Golden Hour", "warm golden hour light"),
-        ("🌃 Blue Hour", "cool blue hour light"),
-        ("☀️ Midday", "bright midday sun"),
-        ("🌙 Moonlight", "soft moonlight"),
-        ("✨ Bioluminescence", "glowing bioluminescent light"),
-        ("💡 Neon", "neon lighting"),
-        ("🌟 Volumetric Rays", "volumetric light rays"),
-        ("🌥️ Overcast", "soft overcast light"),
-        ("🔥 Firelight", "warm flickering firelight"),
-        ("🪐 Cosmic Glow", "mysterious cosmic glow"),
     ]
 
     MOODS = [
@@ -90,27 +63,14 @@ class LandscapePromptGenerator:
         ("☀️☀️ Multiple Suns", "multiple suns in the sky"),
     ]
 
-    STYLES = [
-        ("📷 Realistic", "photorealistic style"),
-        ("🧙 Fantasy", "fantasy art style"),
-        ("🌀 Surreal", "surreal dreamlike style"),
-        ("🌑 Dark", "dark and gritty style"),
-        ("🎈 Fun", "colorful playful style"),
-        ("🌸 Anime", "anime style"),
-        ("🎨 Painterly", "painterly art style"),
-    ]
-
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
                 "landscape_type": ([d for d, _ in cls.LANDSCAPES],),
-                "weather": ([d for d, _ in cls.WEATHERS], {"default": "-"}),
-                "lighting": ([d for d, _ in cls.LIGHTINGS], {"default": "-"}),
                 "mood": ([d for d, _ in cls.MOODS], {"default": "-"}),
                 "vegetation": ([d for d, _ in cls.VEGETATIONS], {"default": "-"}),
                 "sky_element": ([d for d, _ in cls.SKY_ELEMENTS], {"default": "-"}),
-                "style": ([d for d, _ in cls.STYLES], {"default": "📷 Realistic"}),
             }
         }
 
@@ -119,30 +79,21 @@ class LandscapePromptGenerator:
     FUNCTION = "generate_prompt"
     CATEGORY = "Saeed"
 
-    def generate_prompt(self, landscape_type, weather, lighting, mood,
-                        vegetation, sky_element, style):
+    def generate_prompt(self, landscape_type, mood, vegetation, sky_element):
         def get_desc(display, source_list):
             for d, desc in source_list:
                 if d == display:
                     return desc
             return ""
 
-        landscape_desc = get_desc(landscape_type, self.LANDSCAPES)
-        prompt = f"Background landscape: {landscape_desc}"
+        prompt = f"Background landscape: {get_desc(landscape_type, self.LANDSCAPES)}"
 
-        if weather != "-":
-            prompt += f", {get_desc(weather, self.WEATHERS)}"
-        if lighting != "-":
-            prompt += f", {get_desc(lighting, self.LIGHTINGS)}"
         if mood != "-":
             prompt += f", {get_desc(mood, self.MOODS)}"
         if vegetation != "-":
             prompt += f", {get_desc(vegetation, self.VEGETATIONS)}"
         if sky_element != "-":
             prompt += f", {get_desc(sky_element, self.SKY_ELEMENTS)}"
-
-        style_desc = get_desc(style, self.STYLES)
-        prompt += f", {style_desc}"
 
         prompt += ", highly detailed, cinematic composition"
 
